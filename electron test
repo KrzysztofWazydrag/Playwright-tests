@@ -1,0 +1,47 @@
+import { test, expect } from '@playwright/test';
+import { _electron as electron, ElectronApplication, Page } from 'playwright';
+import * as path from 'path'; // Import the path module
+
+// Helper function to launch the Electron app and return the app and first window
+async function launchElectronApp(): Promise<{ electronApp: ElectronApplication, window: Page }> {
+  const mainPath = path.join('/home/susok1987/projects/electron-react-boilerplate/src/main/main.ts');
+  console.log('Launching Electron app...');
+  const electronApp: ElectronApplication = await electron.launch({
+    args: [mainPath],
+  });
+  console.log('Electron app launched');
+
+  const window: Page = await electronApp.windows();
+  console.log('Got first window');
+
+  return { electronApp, window };
+}
+
+test('launches Electron app and gets application path', async () => {
+  const { electronApp, window } = await launchElectronApp();
+
+  const appPath = await electronApp.evaluate(async ({ app }) => {
+    return app.getAppPath();
+  });
+
+  console.log('Application Path:', appPath);
+
+  await electronApp.close();
+  console.log('Electron app closed');
+});
+
+test('Electron App has the correct buttons on it', async () => {
+  const { electronApp, window } = await launchElectronApp();
+
+//   // Print the title.
+//   const title = await window.title();
+//   console.log('Page title:', title);
+
+  await expect(window).toHaveTitle('Hello Electron React!');
+  await expect(window.locator('text=📚Read our docs')).toBeVisible();
+  await expect(window.locator('text=🙏Donate')).toBeVisible();
+  await expect(window.locator('text=electron-react-boilerplate')).toBeVisible();
+
+  await electronApp.close();
+  console.log('Electron app closed');
+});
